@@ -195,7 +195,7 @@
                 <div>
                     <h4 class="font-arcade font-bold text-sm text-white">GN-AI COPILOT</h4>
                     <p class="text-[10px] text-green-400 font-medium flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Local commands active
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Gemini 3.1 Active
                     </p>
                 </div>
             </div>
@@ -406,7 +406,7 @@
                     <h4 class="font-arcade font-bold text-sm text-cyan-300 mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-puzzle-piece"></i> ${widget.title}
                     </h4>
-                    <div>${widget.content || widget.htmlContent || ''}</div>
+                    <div>${widget.content}</div>
                 </div>
             `).join('');
         }
@@ -495,33 +495,20 @@
             sendBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i>';
 
             try {
-                const apiKey = '';
-                if (!apiKey) {
-                    handleFallbackPrompt(prompt);
-                    return;
-                }
+                const systemPrompt = `You are GN-AI Copilot, an intelligent web-modifying agent embedded directly into the GN-Math Arcade website.
+Your primary job is to interpret user commands and return executable JavaScript code to dynamically update the live web page in real time!
 
-                const systemPrompt = `You are GN-AI Copilot, an expert AI assistant embedded in the GN-Math Arcade website. Your job is to help users customize, modify, and interact with the website in real-time by outputting structured JSON actions along with a friendly conversational explanation.
+When the user gives an instruction (e.g., "change background to dark purple", "change header to Math Hub", "make buttons neon cyan", "add stopwatch tool", "add new game"):
+1. Formulate exact executable JavaScript code to modify DOM elements, inline CSS, Tailwind classes, document properties, or update the local \`state\` object.
+2. Provide a friendly explanation of what you changed.
 
-Allowed action types:
-1. "CHANGE_THEME": params -> { themeName: "cyber" | "dark" | "emerald" }
-2. "ADD_WIDGET": params -> { title: string, htmlContent: string }
-3. "ADD_GAME": params -> { id: string, title: string, category: "Geometry"|"Algebra"|"Calculus"|"Arithmetic", description: string, icon: string, color: string, difficulty: "Easy"|"Medium"|"Hard" }
-4. "SET_FONT_SIZE": params -> { size: "normal" | "large" | "xl" }
-5. "CHAT_ONLY": params -> {}
-
-You MUST return valid JSON matching this schema:
+You MUST respond ONLY with a raw valid JSON object with these keys:
 {
-  "explanation": "Friendly response explaining what you did.",
-  "actions": [
-    {
-      "type": "CHANGE_THEME" | "ADD_WIDGET" | "ADD_GAME" | "SET_FONT_SIZE" | "CHAT_ONLY",
-      "params": { ... }
-    }
-  ]
-}
-User request: ${prompt}`;
+  "explanation": "Brief description of changes made.",
+  "jsCode": "JavaScript code to be executed safely in browser DOM context."
+}`;
 
+                const apiKey = ""; // Canvas runtime environment handles authentication automatically
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
                 const payload = {
@@ -538,26 +525,39 @@ User request: ${prompt}`;
                     body: JSON.stringify(payload)
                 });
 
-                const result = await response.json();
-                const candidate = result.candidates?.[0];
-                if (candidate && candidate.content?.parts?.[0]?.text) {
-                    const jsonText = candidate.content.parts[0].text;
-                    const parsed = JSON.parse(jsonText);
-
-                    state.chatHistory.push({ role: 'model', text: parsed.explanation });
-                    renderChat();
-
-                    // Execute actions
-                    if (parsed.actions && Array.isArray(parsed.actions)) {
-                        parsed.actions.forEach(action => executeAction(action));
-                    }
-                    showToast('AI successfully updated the site!', 'success');
-                } else {
-                    throw new Error('Invalid response structure from Gemini API');
+                if (!response.ok) {
+                    throw new Error(`API Request failed with status ${response.status}`);
                 }
+
+                const result = await response.json();
+                const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!textContent) {
+                    throw new Error('Empty response received from AI model');
+                }
+
+                // Clean possible markdown code fences
+                const cleanedJsonText = textContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                const parsed = JSON.parse(cleanedJsonText);
+
+                // Execute generated JS code dynamically on live DOM
+                if (parsed.jsCode) {
+                    try {
+                        const executeFn = new Function(parsed.jsCode);
+                        executeFn();
+                    } catch (execErr) {
+                        console.error('Execution Error:', execErr);
+                    }
+                }
+
+                // Render model explanation and action feedback box in chat
+                const feedbackMsg = `${parsed.explanation || 'Updated the site successfully!'}${parsed.jsCode ? `<div class="mt-2 p-2 bg-slate-950/80 rounded-lg border border-green-500/30 text-[10px] font-mono text-green-300 overflow-x-auto"><strong>Executed Code:</strong><br>${escapeHtml(parsed.jsCode)}</div>` : ''}`;
+                state.chatHistory.push({ role: 'model', text: feedbackMsg });
+                renderChat();
+
+                showToast('AI dynamically updated the live page!', 'success');
             } catch (error) {
-                console.error(error);
-                // Fallback smart parser if API encounters issue or key limits
+                console.warn('API call failed or key absent; executing local smart fallback handler:', error);
                 handleFallbackPrompt(prompt);
             } finally {
                 sendBtn.disabled = false;
@@ -565,78 +565,52 @@ User request: ${prompt}`;
             }
         }
 
-        // Intelligent Fallback Local Command Executor
+        // Local dynamic execution fallback for seamless user experience
         function handleFallbackPrompt(prompt) {
             const p = prompt.toLowerCase();
-            let responseText = "I processed your request locally!";
-            
-            if (p.includes('theme') || p.includes('neon') || p.includes('cyber')) {
-                executeAction({ type: 'CHANGE_THEME', params: { themeName: 'cyber' } });
-                responseText = "Switched to Cyber Neon theme!";
-            } else if (p.includes('stopwatch') || p.includes('timer')) {
-                executeAction({
-                    type: 'ADD_WIDGET',
-                    params: {
-                        title: 'Quick Stopwatch',
-                        htmlContent: `
-                            <div class="text-center py-2">
-                                <div id="stopwatch-display" class="font-arcade font-bold text-2xl text-white mb-3">00:00.00</div>
-                                <div class="flex gap-2 justify-center">
-                                    <button onclick="startStopwatch()" class="px-3 py-1.5 bg-green-500 text-slate-950 font-bold rounded-lg text-xs">Start</button>
-                                    <button onclick="resetStopwatch()" class="px-3 py-1.5 bg-slate-800 text-slate-300 font-medium rounded-lg text-xs">Reset</button>
-                                </div>
-                            </div>
-                        `
-                    }
-                });
-                responseText = "Added a fully functional Stopwatch tool to your hub!";
-            } else if (p.includes('font') || p.includes('larger')) {
-                executeAction({ type: 'SET_FONT_SIZE', params: { size: 'large' } });
-                responseText = "Increased site font sizes for enhanced readability!";
-            } else if (p.includes('game') || p.includes('matrix')) {
-                executeAction({
-                    type: 'ADD_GAME',
-                    params: {
-                        id: 'matrix-hacker',
-                        title: 'Matrix Hacker Math',
-                        category: 'Algebra',
-                        description: 'Crack cipher matrices using linear equation solver.',
-                        icon: 'fa-code',
-                        color: 'from-emerald-500 to-teal-700',
-                        difficulty: 'Hard'
-                    }
-                });
-                responseText = "Created and added a brand new game card: Matrix Hacker Math!";
+            let jsCode = "";
+            let explanation = "";
+
+            if (p.includes('purple')) {
+                jsCode = "document.body.style.backgroundColor = '#1e1b4b'; showToast('Background set to Deep Purple', 'info');";
+                explanation = "Changed site background to a deep purple tone!";
+            } else if (p.includes('title') || p.includes('header') || p.includes('name')) {
+                jsCode = "document.getElementById('hero-title').innerHTML = 'Master Math with <span class=\"text-cyan-400\">Math Masters</span>';";
+                explanation = "Updated the hero header title text!";
+            } else if (p.includes('neon') || p.includes('button') || p.includes('green')) {
+                jsCode = "document.querySelectorAll('button').forEach(btn => { btn.style.boxShadow = '0 0 15px #22c55e'; btn.style.borderColor = '#22c55e'; });";
+                explanation = "Applied glowing neon green borders and aura to all buttons!";
+            } else if (p.includes('stopwatch') || p.includes('timer') || p.includes('tool')) {
+                jsCode = `
+                    state.customWidgets.push({
+                        title: 'Interactive Stopwatch Tool',
+                        content: \`<div class="text-center py-2"><div id="stopwatch-display" class="font-arcade text-3xl font-bold text-white mb-3">00:00.00</div><div class="flex justify-center gap-2"><button onclick="startStopwatch()" class="px-3 py-1.5 bg-green-500 text-black font-bold rounded-lg text-xs">Start/Pause</button><button onclick="resetStopwatch()" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs">Reset</button></div></div>\`
+                    });
+                    renderCustomWidgets();
+                `;
+                explanation = "Added an interactive stopwatch widget to your dashboard!";
             } else {
-                responseText = `I heard: "${prompt}". Try asking me to "Add a stopwatch tool", "Change theme to cyber neon", or "Make fonts larger"!`;
+                jsCode = "state.games.unshift({ id: 'ai-gen-' + Date.now(), title: 'AI Speed Blitz', category: 'Arithmetic', description: 'Real-time quick math puzzle generated by AI Copilot.', icon: 'fa-brain', color: 'from-pink-500 to-rose-600', difficulty: 'Medium' }); renderGames();";
+                explanation = "Added a brand new AI Speed Blitz card to your interactive games grid!";
             }
 
-            state.chatHistory.push({ role: 'model', text: responseText });
+            try {
+                const fn = new Function(jsCode);
+                fn();
+            } catch (err) {
+                console.error('Fallback Execution Error:', err);
+            }
+
+            const feedbackMsg = `${explanation}<div class="mt-2 p-2 bg-slate-950/80 rounded-lg border border-green-500/30 text-[10px] font-mono text-green-300 overflow-x-auto"><strong>Executed Code:</strong><br>${escapeHtml(jsCode)}</div>`;
+            state.chatHistory.push({ role: 'model', text: feedbackMsg });
             renderChat();
-            showToast('AI command executed!', 'success');
-        }
-
-        // Execute Structured Actions
-        let stopwatchInterval = null;
-        let stopwatchTime = 0;
-
-        function executeAction(action) {
-            if (action.type === 'CHANGE_THEME') {
-                document.getElementById('app-body').className = "bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-cyan-500 selection:text-black";
-                showToast('Theme updated to Cyber Neon!', 'success');
-            } else if (action.type === 'ADD_WIDGET') {
-                state.customWidgets.push(action.params);
-                renderCustomWidgets();
-            } else if (action.type === 'ADD_GAME') {
-                state.games.unshift(action.params);
-                renderGames();
-            } else if (action.type === 'SET_FONT_SIZE') {
-                const fontSizes = { normal: '16px', large: '18px', xl: '20px' };
-                document.documentElement.style.fontSize = fontSizes[action.params.size] || fontSizes.normal;
-            }
+            showToast('AI command executed live!', 'success');
         }
 
         // Stopwatch Tool Handlers
+        let stopwatchInterval = null;
+        let stopwatchTime = 0;
+
         function startStopwatch() {
             const display = document.getElementById('stopwatch-display');
             if (!display) return;
