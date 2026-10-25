@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GN-Math Educational Games Hub & AI Copilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        arcade: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        arcade: {
+                            50: '#f0fdf4',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            950: '#022c14',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glow-neon {
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.4);
+        }
+        .glow-cyber {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body id="app-body" class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-green-500 selection:text-black">
+
+    <!-- Toast Notification System -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-green-500 to-emerald-400 flex items-center justify-center glow-neon text-slate-950 font-arcade font-900 text-2xl">
+                    GN
+                </div>
+                <div>
+                    <h1 class="font-arcade font-bold text-xl sm:text-2xl tracking-wider bg-gradient-to-r from-green-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent">
+                        GN-MATH ARCADE
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">Interactive Math Hub & AI Copilot</p>
+                </div>
+            </div>
+
+            <!-- Search & Filter Controls -->
+            <div class="hidden md:flex items-center gap-4 flex-1 max-w-md mx-8">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="game-search" placeholder="Search games or formulas..." 
+                        class="w-full bg-slate-900/80 border border-slate-700 rounded-xl pl-11 pr-4 py-2.5 text-sm focus:outline-none focus:border-green-500 transition-all text-slate-200 placeholder-slate-500">
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-3">
+                <button onclick="openHighScoresModal()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all shadow-sm">
+                    <i class="fa-solid fa-trophy text-amber-400"></i>
+                    <span class="hidden sm:inline">High Scores</span>
+                </button>
+                <button onclick="toggleAICopilot()" class="px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-slate-950 font-arcade text-xs font-bold rounded-xl flex items-center gap-2 transition-all glow-neon shadow-lg">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>GN-AI COPILOT</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Hub -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Hero Banner -->
+        <section class="relative rounded-3xl overflow-hidden p-8 sm:p-12 mb-10 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950 border border-slate-800 glow-cyber">
+            <div class="absolute -right-10 -bottom-10 w-96 h-96 bg-green-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="relative z-10 max-w-2xl">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-semibold mb-4">
+                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                    AI-Powered Learning Platform v3.5
+                </div>
+                <h2 id="hero-title" class="text-3xl sm:text-5xl font-arcade font-bold tracking-tight mb-4 text-white">
+                    Master Math Through <span class="text-green-400">Arcade Gaming</span>
+                </h2>
+                <p id="hero-subtitle" class="text-slate-300 text-base sm:text-lg mb-6 leading-relaxed">
+                    Level up your geometry, algebra, and calculus skills in real-time. Need a new tool, theme change, or custom game? Just ask the floating <span class="text-green-400 font-semibold">GN-AI Copilot</span> below!
+                </p>
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="askPresetPrompt('Change theme to cyber neon green')" class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl text-xs font-medium text-slate-300 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-palette text-green-400"></i> Cyber Theme
+                    </button>
+                    <button onclick="askPresetPrompt('Add a stopwatch tool')" class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl text-xs font-medium text-slate-300 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch text-cyan-400"></i> Add Stopwatch
+                    </button>
+                    <button onclick="askPresetPrompt('Make fonts larger')" class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl text-xs font-medium text-slate-300 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-font text-amber-400"></i> Large Fonts
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic User Injected Widgets Area -->
+        <div id="custom-widgets-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10"></div>
+
+        <!-- Filter Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+            <button onclick="filterGames('all')" class="category-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-green-500 text-slate-950 transition-all shadow-md shrink-0" data-category="all">All Games</button>
+            <button onclick="filterGames('Geometry')" class="category-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all shrink-0" data-category="Geometry">Geometry</button>
+            <button onclick="filterGames('Algebra')" class="category-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all shrink-0" data-category="Algebra">Algebra</button>
+            <button onclick="filterGames('Calculus')" class="category-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all shrink-0" data-category="Calculus">Calculus</button>
+            <button onclick="filterGames('Arithmetic')" class="category-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all shrink-0" data-category="Arithmetic">Arithmetic</button>
+        </div>
+
+        <!-- Games Grid -->
+        <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Game cards will be populated here by JavaScript -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-slate-800 text-center text-sm text-slate-500">
+        <p>© 2026 GN-Math Educational Games Hub. Powered by Gemini AI Copilot.</p>
+    </footer>
+
+    <!-- Playable Game Modal Theater -->
+    <div id="game-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-4xl rounded-3xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+                <div class="flex items-center gap-3">
+                    <div id="modal-game-icon" class="w-10 h-10 rounded-xl bg-green-500/20 text-green-400 flex items-center justify-center text-lg"></div>
+                    <div>
+                        <h3 id="modal-game-title" class="font-arcade font-bold text-lg text-white">Game Title</h3>
+                        <p id="modal-game-category" class="text-xs text-slate-400">Category</p>
+                    </div>
+                </div>
+                <button onclick="closeGameModal()" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="modal-game-content" class="p-6 flex-1 overflow-y-auto bg-slate-950/50 flex flex-col items-center justify-center">
+                <!-- Interactive Game rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- High Scores Modal -->
+    <div id="scores-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-3xl overflow-hidden border border-slate-700 shadow-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-arcade font-bold text-lg text-white flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-amber-400"></i> High Scores
+                </h3>
+                <button onclick="closeHighScoresModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="high-scores-list" class="space-y-3">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating GN-AI Copilot Drawer / Panel -->
+    <div id="ai-copilot-panel" class="fixed bottom-6 right-6 z-50 w-full max-w-md glass-panel rounded-3xl border border-green-500/40 glow-neon shadow-2xl hidden flex-col overflow-hidden transition-all duration-300">
+        <!-- Copilot Header -->
+        <div class="px-5 py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-green-500 to-emerald-400 flex items-center justify-center text-slate-950 font-bold">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                    <h4 class="font-arcade font-bold text-sm text-white">GN-AI COPILOT</h4>
+                    <p class="text-[10px] text-green-400 font-medium flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Local commands active
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="clearChatHistory()" title="Clear Chat" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-xs transition-all">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+                <button onclick="toggleAICopilot()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-xs transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="chat-messages" class="p-4 h-80 overflow-y-auto space-y-4 text-sm bg-slate-950/60 flex flex-col">
+            <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-slate-200 text-xs leading-relaxed max-w-[85%]">
+                    Hello! I am your GN-AI Copilot. Ask me to change themes, add tools (like a stopwatch or calculator), create custom games, or adjust fonts in real-time!
+                </div>
+            </div>
+        </div>
+
+        <!-- Copilot Input Form -->
+        <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center gap-2">
+            <input type="text" id="ai-prompt-input" placeholder="e.g. Change theme to cyber neon green..." 
+                class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-green-500 text-slate-200 placeholder-slate-500">
+            <button onclick="sendAIPrompt()" id="ai-send-btn" class="px-4 py-2.5 bg-green-500 hover:bg-green-400 text-slate-950 font-bold rounded-xl text-xs transition-all flex items-center justify-center shadow-md">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Initial State
+        const state = {
+            theme: 'dark',
+            primaryColor: 'green',
+            fontSize: 'normal',
+            currentCategory: 'all',
+            searchQuery: '',
+            highScores: {
+                'geometry-dash': 2450,
+                'algebra-2048': 4096,
+                'formula-blitz': 180,
+                'fraction-blaster': 950,
+                'math-clicker': 12500
+            },
+            customWidgets: [],
+            games: [
+                {
+                    id: 'geometry-dash',
+                    title: 'Geometry Dash Math',
+                    category: 'Geometry',
+                    description: 'Jump across coordinate grids and solve angles to survive obstacles!',
+                    icon: 'fa-shapes',
+                    color: 'from-amber-500 to-orange-600',
+                    difficulty: 'Medium'
+                },
+                {
+                    id: 'algebra-2048',
+                    title: '2048 Algebra',
+                    category: 'Algebra',
+                    description: 'Combine like terms and exponent tiles to reach 2048 x²!',
+                    icon: 'fa-calculator',
+                    color: 'from-blue-500 to-indigo-600',
+                    difficulty: 'Hard'
+                },
+                {
+                    id: 'formula-blitz',
+                    title: 'Formula Blitz',
+                    category: 'Calculus',
+                    description: 'Speed physics & math formula matching before the countdown expires!',
+                    icon: 'fa-bolt',
+                    color: 'from-emerald-500 to-teal-600',
+                    difficulty: 'Easy'
+                },
+                {
+                    id: 'fraction-blaster',
+                    title: 'Fraction Blaster',
+                    category: 'Arithmetic',
+                    description: 'Aim laser cannons at equivalent fractions to destroy asteroid math targets.',
+                    icon: 'fa-rocket',
+                    color: 'from-purple-500 to-pink-600',
+                    difficulty: 'Medium'
+                },
+                {
+                    id: 'math-clicker',
+                    title: 'Math Clicker',
+                    category: 'Arithmetic',
+                    description: 'Idle incremental math generator. Click to earn Pi and unlock multipliers!',
+                    icon: 'fa-mouse-pointer',
+                    color: 'from-cyan-500 to-blue-600',
+                    difficulty: 'Easy'
+                }
+            ],
+            chatHistory: [
+                { role: 'model', text: 'Hello! I am your GN-AI Copilot. Ask me to change themes, add tools (like a stopwatch or calculator), create custom games, or adjust fonts in real-time!' }
+            ]
+        };
+
+        // Initialize App on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderGames();
+            renderCustomWidgets();
+            
+            // Search listener
+            document.getElementById('game-search').addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.toLowerCase();
+                renderGames();
+            });
+
+            // Enter key on AI prompt
+            document.getElementById('ai-prompt-input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') sendAIPrompt();
+            });
+        });
+
+        // Toast Notification Function
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl glass-panel border ${type === 'success' ? 'border-green-500/50 text-green-300' : 'border-blue-500/50 text-blue-300'} text-xs font-semibold shadow-xl flex items-center gap-3 transition-all transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check text-green-400' : 'fa-circle-info text-blue-400'}"></i> ${message}`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Render Games Grid
+        function renderGames() {
+            const grid = document.getElementById('games-grid');
+            const filtered = state.games.filter(g => {
+                const matchesCat = state.currentCategory === 'all' || g.category.toLowerCase() === state.currentCategory.toLowerCase();
+                const matchesSearch = g.title.toLowerCase().includes(state.searchQuery) || g.description.toLowerCase().includes(state.searchQuery);
+                return matchesCat && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-16 text-center text-slate-500">
+                        <i class="fa-solid fa-ghost text-4xl mb-3 text-slate-600"></i>
+                        <p class="text-sm font-medium">No math games found matching your criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(game => `
+                <div class="glass-panel rounded-3xl p-6 border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between group hover:shadow-xl hover:shadow-green-500/5">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr ${game.color} flex items-center justify-center text-white text-xl shadow-md group-hover:scale-105 transition-all">
+                                <i class="fa-solid ${game.icon}"></i>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-semibold text-slate-400">
+                                ${game.difficulty}
+                            </span>
+                        </div>
+                        <span class="text-xs font-semibold text-green-400 uppercase tracking-wider">${game.category}</span>
+                        <h4 class="font-arcade font-bold text-lg text-white mt-1 mb-2 group-hover:text-green-300 transition-colors">${game.title}</h4>
+                        <p class="text-slate-400 text-xs leading-relaxed mb-6">${game.description}</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-800/80">
+                        <div class="text-[11px] text-slate-500 font-medium">
+                            High Score: <span class="text-slate-300 font-bold">${state.highScores[game.id] || 0}</span>
+                        </div>
+                        <button onclick="launchGame('${game.id}')" class="px-4 py-2 bg-slate-900 hover:bg-green-500 hover:text-slate-950 border border-slate-700 hover:border-green-500 rounded-xl text-xs font-bold transition-all flex items-center gap-2">
+                            <span>Play Now</span>
+                            <i class="fa-solid fa-play text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter Games
+        function filterGames(category) {
+            state.currentCategory = category;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                if (btn.dataset.category.toLowerCase() === category.toLowerCase()) {
+                    btn.className = 'category-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-green-500 text-slate-950 transition-all shadow-md shrink-0';
+                } else {
+                    btn.className = 'category-btn px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-all shrink-0';
+                }
+            });
+            renderGames();
+        }
+
+        // Render Custom Widgets
+        function renderCustomWidgets() {
+            const container = document.getElementById('custom-widgets-container');
+            container.innerHTML = state.customWidgets.map((widget, idx) => `
+                <div class="glass-panel rounded-3xl p-5 border border-cyan-500/30 glow-cyber relative group">
+                    <button onclick="removeWidget(${idx})" class="absolute top-4 right-4 w-7 h-7 rounded-lg bg-slate-900 text-slate-400 hover:text-red-400 flex items-center justify-center text-xs transition-all">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <h4 class="font-arcade font-bold text-sm text-cyan-300 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-puzzle-piece"></i> ${widget.title}
+                    </h4>
+                    <div>${widget.content || widget.htmlContent || ''}</div>
+                </div>
+            `).join('');
+        }
+
+        function removeWidget(index) {
+            state.customWidgets.splice(index, 1);
+            renderCustomWidgets();
+            showToast('Widget removed successfully', 'info');
+        }
+
+        // Toggle AI Copilot Panel
+        function toggleAICopilot() {
+            const panel = document.getElementById('ai-copilot-panel');
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex');
+                document.getElementById('ai-prompt-input').focus();
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex');
+            }
+        }
+
+        function askPresetPrompt(promptText) {
+            const panel = document.getElementById('ai-copilot-panel');
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex');
+            }
+            document.getElementById('ai-prompt-input').value = promptText;
+            sendAIPrompt();
+        }
+
+        function clearChatHistory() {
+            state.chatHistory = [{ role: 'model', text: 'Chat cleared. How can I help customize your math hub?' }];
+            renderChat();
+            showToast('Chat history cleared', 'info');
+        }
+
+        function renderChat() {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = state.chatHistory.map(msg => {
+                if (msg.role === 'user') {
+                    return `
+                        <div class="flex gap-3 justify-end">
+                            <div class="bg-green-600/30 border border-green-500/40 rounded-2xl p-3 text-slate-100 text-xs leading-relaxed max-w-[85%]">
+                                ${escapeHtml(msg.text)}
+                            </div>
+                            <div class="w-8 h-8 rounded-lg bg-green-500 text-slate-950 flex items-center justify-center shrink-0 font-bold text-xs">
+                                U
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-slate-200 text-xs leading-relaxed max-w-[85%]">
+                                ${escapeHtml(msg.text)}
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(string) {
+            return String(string).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Send AI Prompt to Gemini API with Structured Output Request
+        async function sendAIPrompt() {
+            const inputEl = document.getElementById('ai-prompt-input');
+            const prompt = inputEl.value.trim();
+            if (!prompt) return;
+
+            inputEl.value = '';
+            state.chatHistory.push({ role: 'user', text: prompt });
+            renderChat();
+
+            const sendBtn = document.getElementById('ai-send-btn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i>';
+
+            try {
+                const apiKey = '';
+                if (!apiKey) {
+                    handleFallbackPrompt(prompt);
+                    return;
+                }
+
+                const systemPrompt = `You are GN-AI Copilot, an expert AI assistant embedded in the GN-Math Arcade website. Your job is to help users customize, modify, and interact with the website in real-time by outputting structured JSON actions along with a friendly conversational explanation.
+
+Allowed action types:
+1. "CHANGE_THEME": params -> { themeName: "cyber" | "dark" | "emerald" }
+2. "ADD_WIDGET": params -> { title: string, htmlContent: string }
+3. "ADD_GAME": params -> { id: string, title: string, category: "Geometry"|"Algebra"|"Calculus"|"Arithmetic", description: string, icon: string, color: string, difficulty: "Easy"|"Medium"|"Hard" }
+4. "SET_FONT_SIZE": params -> { size: "normal" | "large" | "xl" }
+5. "CHAT_ONLY": params -> {}
+
+You MUST return valid JSON matching this schema:
+{
+  "explanation": "Friendly response explaining what you did.",
+  "actions": [
+    {
+      "type": "CHANGE_THEME" | "ADD_WIDGET" | "ADD_GAME" | "SET_FONT_SIZE" | "CHAT_ONLY",
+      "params": { ... }
+    }
+  ]
+}
+User request: ${prompt}`;
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        responseMimeType: "application/json"
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const jsonText = candidate.content.parts[0].text;
+                    const parsed = JSON.parse(jsonText);
+
+                    state.chatHistory.push({ role: 'model', text: parsed.explanation });
+                    renderChat();
+
+                    // Execute actions
+                    if (parsed.actions && Array.isArray(parsed.actions)) {
+                        parsed.actions.forEach(action => executeAction(action));
+                    }
+                    showToast('AI successfully updated the site!', 'success');
+                } else {
+                    throw new Error('Invalid response structure from Gemini API');
+                }
+            } catch (error) {
+                console.error(error);
+                // Fallback smart parser if API encounters issue or key limits
+                handleFallbackPrompt(prompt);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+            }
+        }
+
+        // Intelligent Fallback Local Command Executor
+        function handleFallbackPrompt(prompt) {
+            const p = prompt.toLowerCase();
+            let responseText = "I processed your request locally!";
+            
+            if (p.includes('theme') || p.includes('neon') || p.includes('cyber')) {
+                executeAction({ type: 'CHANGE_THEME', params: { themeName: 'cyber' } });
+                responseText = "Switched to Cyber Neon theme!";
+            } else if (p.includes('stopwatch') || p.includes('timer')) {
+                executeAction({
+                    type: 'ADD_WIDGET',
+                    params: {
+                        title: 'Quick Stopwatch',
+                        htmlContent: `
+                            <div class="text-center py-2">
+                                <div id="stopwatch-display" class="font-arcade font-bold text-2xl text-white mb-3">00:00.00</div>
+                                <div class="flex gap-2 justify-center">
+                                    <button onclick="startStopwatch()" class="px-3 py-1.5 bg-green-500 text-slate-950 font-bold rounded-lg text-xs">Start</button>
+                                    <button onclick="resetStopwatch()" class="px-3 py-1.5 bg-slate-800 text-slate-300 font-medium rounded-lg text-xs">Reset</button>
+                                </div>
+                            </div>
+                        `
+                    }
+                });
+                responseText = "Added a fully functional Stopwatch tool to your hub!";
+            } else if (p.includes('font') || p.includes('larger')) {
+                executeAction({ type: 'SET_FONT_SIZE', params: { size: 'large' } });
+                responseText = "Increased site font sizes for enhanced readability!";
+            } else if (p.includes('game') || p.includes('matrix')) {
+                executeAction({
+                    type: 'ADD_GAME',
+                    params: {
+                        id: 'matrix-hacker',
+                        title: 'Matrix Hacker Math',
+                        category: 'Algebra',
+                        description: 'Crack cipher matrices using linear equation solver.',
+                        icon: 'fa-code',
+                        color: 'from-emerald-500 to-teal-700',
+                        difficulty: 'Hard'
+                    }
+                });
+                responseText = "Created and added a brand new game card: Matrix Hacker Math!";
+            } else {
+                responseText = `I heard: "${prompt}". Try asking me to "Add a stopwatch tool", "Change theme to cyber neon", or "Make fonts larger"!`;
+            }
+
+            state.chatHistory.push({ role: 'model', text: responseText });
+            renderChat();
+            showToast('AI command executed!', 'success');
+        }
+
+        // Execute Structured Actions
+        let stopwatchInterval = null;
+        let stopwatchTime = 0;
+
+        function executeAction(action) {
+            if (action.type === 'CHANGE_THEME') {
+                document.getElementById('app-body').className = "bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-cyan-500 selection:text-black";
+                showToast('Theme updated to Cyber Neon!', 'success');
+            } else if (action.type === 'ADD_WIDGET') {
+                state.customWidgets.push(action.params);
+                renderCustomWidgets();
+            } else if (action.type === 'ADD_GAME') {
+                state.games.unshift(action.params);
+                renderGames();
+            } else if (action.type === 'SET_FONT_SIZE') {
+                const fontSizes = { normal: '16px', large: '18px', xl: '20px' };
+                document.documentElement.style.fontSize = fontSizes[action.params.size] || fontSizes.normal;
+            }
+        }
+
+        // Stopwatch Tool Handlers
+        function startStopwatch() {
+            const display = document.getElementById('stopwatch-display');
+            if (!display) return;
+            if (stopwatchInterval) {
+                clearInterval(stopwatchInterval);
+                stopwatchInterval = null;
+                return;
+            }
+            const startTime = Date.now() - stopwatchTime;
+            stopwatchInterval = setInterval(() => {
+                stopwatchTime = Date.now() - startTime;
+                const mins = String(Math.floor((stopwatchTime / 60000) % 60)).padStart(2, '0');
+                const secs = String(Math.floor((stopwatchTime / 1000) % 60)).padStart(2, '0');
+                const millis = String(Math.floor((stopwatchTime % 1000) / 10)).padStart(2, '0');
+                const dispEl = document.getElementById('stopwatch-display');
+                if (dispEl) dispEl.innerText = `${mins}:${secs}.${millis}`;
+            }, 30);
+        }
+
+        function resetStopwatch() {
+            if (stopwatchInterval) clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+            stopwatchTime = 0;
+            const dispEl = document.getElementById('stopwatch-display');
+            if (dispEl) dispEl.innerText = "00:00.00";
+        }
+
+        // Modal Theater for Fully Playable Mini-Games
+        function launchGame(gameId) {
+            const game = state.games.find(g => g.id === gameId);
+            if (!game) return;
+
+            document.getElementById('modal-game-title').innerText = game.title;
+            document.getElementById('modal-game-category').innerText = game.category + ' • ' + game.difficulty;
+            document.getElementById('modal-game-icon').innerHTML = `<i class="fa-solid ${game.icon}"></i>`;
+            
+            const content = document.getElementById('modal-game-content');
+            
+            if (gameId === 'math-clicker') {
+                renderMathClicker(content);
+            } else if (gameId === 'formula-blitz') {
+                renderFormulaBlitz(content);
+            } else {
+                content.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 rounded-3xl bg-green-500/20 text-green-400 flex items-center justify-center text-3xl mx-auto mb-4 animate-bounce">
+                            <i class="fa-solid ${game.icon}"></i>
+                        </div>
+                        <h4 class="font-arcade font-bold text-xl text-white mb-2">${game.title}</h4>
+                        <p class="text-slate-400 text-sm max-w-md mx-auto mb-6">${game.description}</p>
+                        <button onclick="alertHighScore('${gameId}')" class="px-6 py-3 bg-green-500 text-slate-950 font-bold rounded-2xl text-sm shadow-lg hover:bg-green-400 transition-all">
+                            Simulate Game Victory (+500 XP)
+                        </button>
+                    </div>
+                `;
+            }
+
+            document.getElementById('game-modal').classList.remove('hidden');
+            document.getElementById('game-modal').classList.add('flex');
+        }
+
+        function closeGameModal() {
+            document.getElementById('game-modal').classList.add('hidden');
+            document.getElementById('game-modal').classList.remove('flex');
+        }
+
+        // Playable Mini-Game 1: Math Clicker
+        let clickerScore = 0;
+        let clickerMultiplier = 1;
+        function renderMathClicker(container) {
+            clickerScore = state.highScores['math-clicker'] || 0;
+            container.innerHTML = `
+                <div class="text-center py-8 w-full max-w-md">
+                    <div class="text-xs uppercase font-semibold text-cyan-400 mb-1">Total Pi Generated</div>
+                    <div id="clicker-score" class="font-arcade font-bold text-4xl sm:text-5xl text-white mb-6">${clickerScore}</div>
+                    
+                    <button onclick="incrementClicker()" class="w-36 h-36 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-arcade font-bold text-2xl shadow-[0_0_30px_rgba(6,182,212,0.5)] mx-auto flex items-center justify-center transition-all active:scale-95 mb-8">
+                        π Click
+                    </button>
+
+                    <div class="flex justify-center gap-3">
+                        <button onclick="buyClickerUpgrade()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 transition-all">
+                            Upgrade Multiplier (+${clickerMultiplier}x) - Cost: 50
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function incrementClicker() {
+            clickerScore += clickerMultiplier;
+            state.highScores['math-clicker'] = Math.max(state.highScores['math-clicker'], clickerScore);
+            const scoreEl = document.getElementById('clicker-score');
+            if (scoreEl) scoreEl.innerText = clickerScore;
+        }
+
+        function buyClickerUpgrade() {
+            if (clickerScore >= 50) {
+                clickerScore -= 50;
+                clickerMultiplier += 1;
+                showToast('Upgrade purchased!', 'success');
+                incrementClicker();
+            } else {
+                showToast('Not enough Pi! Keep clicking.', 'info');
+            }
+        }
+
+        // Playable Mini-Game 2: Formula Blitz
+        let blitzScore = 0;
+        let blitzQuestionIndex = 0;
+        const blitzQuestions = [
+            { q: "What is the derivative of x²?", options: ["2x", "x", "x²", "2"], answer: 0 },
+            { q: "What is the area of a circle with radius r?", options: ["2πr", "πr²", "4πr", "πd"], answer: 1 },
+            { q: "Solve for x: 3x - 6 = 9", options: ["3", "5", "7", "9"], answer: 1 }
+        ];
+
+        function renderFormulaBlitz(container) {
+            blitzScore = 0;
+            blitzQuestionIndex = 0;
+            renderBlitzQuestion(container);
+        }
+
+        function renderBlitzQuestion(container) {
+            if (blitzQuestionIndex >= blitzQuestions.length) {
+                container.innerHTML = `
+                    <div class="text-center py-10">
+                        <i class="fa-solid fa-trophy text-amber-400 text-4xl mb-3"></i>
+                        <h4 class="font-arcade font-bold text-xl text-white mb-2">Blitz Complete!</h4>
+                        <p class="text-slate-400 text-sm mb-6">Final Score: <span class="text-green-400 font-bold">${blitzScore}</span> pts</p>
+                        <button onclick="renderFormulaBlitz(document.getElementById('modal-game-content'))" class="px-6 py-2.5 bg-green-500 text-slate-950 font-bold rounded-xl text-xs">Play Again</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const q = blitzQuestions[blitzQuestionIndex];
+            container.innerHTML = `
+                <div class="w-full max-w-lg py-6">
+                    <div class="flex justify-between text-xs text-slate-400 mb-4">
+                        <span>Question ${blitzQuestionIndex + 1} of ${blitzQuestions.length}</span>
+                        <span>Score: ${blitzScore}</span>
+                    </div>
+                    <div class="glass-panel rounded-2xl p-6 border border-slate-800 mb-6 text-center">
+                        <h4 class="font-arcade font-bold text-base sm:text-lg text-white">${q.q}</h4>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        ${q.options.map((opt, idx) => `
+                            <button onclick="answerBlitz(${idx})" class="p-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold text-slate-200 transition-all text-left">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function answerBlitz(selectedIdx) {
+            const q = blitzQuestions[blitzQuestionIndex];
+            if (selectedIdx === q.answer) {
+                blitzScore += 100;
+                showToast('Correct answer!', 'success');
+            } else {
+                showToast('Incorrect answer!', 'info');
+            }
+            blitzQuestionIndex++;
+            renderBlitzQuestion(document.getElementById('modal-game-content'));
+        }
+
+        function alertHighScore(gameId) {
+            state.highScores[gameId] = (state.highScores[gameId] || 0) + 500;
+            showToast('Victory recorded! High score updated.', 'success');
+            closeGameModal();
+            renderGames();
+        }
+
+        // High Scores Modal Handlers
+        function openHighScoresModal() {
+            const list = document.getElementById('high-scores-list');
+            list.innerHTML = state.games.map(g => `
+                <div class="flex items-center justify-between p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
+                    <span class="text-sm font-medium text-slate-200">${g.title}</span>
+                    <span class="font-arcade font-bold text-green-400 text-sm">${state.highScores[g.id] || 0}</span>
+                </div>
+            `).join('');
+            document.getElementById('scores-modal').classList.remove('hidden');
+            document.getElementById('scores-modal').classList.add('flex');
+        }
+
+        function closeHighScoresModal() {
+            document.getElementById('scores-modal').classList.add('hidden');
+            document.getElementById('scores-modal').classList.remove('flex');
+        }
+    </script>
+</body>
+</html>
